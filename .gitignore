@@ -3,3 +3,5 @@ experiments
 jupiter
 .idea
 trash
+__pycache__
+
