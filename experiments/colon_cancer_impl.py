@@ -1,23 +1,8 @@
 import os
-import random
-import scipy.io
-import numpy as np 
-from PIL import Image
-from skimage import io, color
-import itertools
+
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.utils.data as data_utils
-import torchvision.transforms as transforms
-import torchvision.models as models
-import torch_geometric.utils as pyg_ut
-from torch_geometric.nn import DenseSAGEConv, dense_diff_pool
-import dataloaders.utils_augmentation as utils_augmentation
-from torch.autograd import Variable
 
-from chamferdist import ChamferDistance
 from dataloaders.colon_dataset import ColonCancerBagsCross
 
 

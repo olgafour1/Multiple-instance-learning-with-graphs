@@ -1,18 +1,18 @@
 from __future__ import print_function
 import numpy as np
-from matplotlib import pyplot as plt
+import random
 from torch.utils.data import ConcatDataset
 import torch
-import torch.utils.data as data_utils
 import torch.optim as optim
-from torch.autograd import Variable
-from sklearn.model_selection import KFold
-from models.MIL_GNN import GraphBased28x28x1, GraphBased27x27x3, GraphBased50x50x3
 
+from sklearn.model_selection import KFold
+from models.MIL_GNN import  GraphBased27x27x3, GraphBased50x50x3
 
 from dataloaders.colon_dataset import ColonCancerBagsCross
-from dataloaders.breast_cancer_bags_loader import BreastCancerBags
-#from pytorchtools import EarlyStopping
+from os import path
+import sys
+sys.path.append(path.abspath('/home/adminofourkioti/PycharmProjects/early-stopping-pytorch'))
+from pytorchtools import EarlyStopping
 
 
 COLON = True
@@ -25,7 +25,7 @@ def load_CC_train_test(ds):
     train = []
     valid=[]
     test = []
-    step = N * 7// 10
+    step = N * 9// 10
     [train.append((ds[i][0], ds[i][1][0])) for i in range(0, step)]
     print(f"train loaded {len(train)} items")
     [valid.append((ds[i][0], ds[i][1][0])) for i in range(step, step+N*1 //10)]
@@ -38,7 +38,7 @@ def load_BREAST_train_test(ds):
     N = len(ds)
     train = []
     test = []
-    step = N * 7 // 10
+    step = N * 9 // 10
     [train.append((ds[i][0], ds[i][1])) for i in range(0, step)]
     print(f"train loaded {len(train)} items")
     [test.append((ds[i][0], ds[i][1])) for i in range(step, step + N * 3 // 10)]
@@ -59,6 +59,9 @@ def train(model, optimizer, train_loader, valid_loader):
     ALL = 0.
     VALID_ALL=0
     for batch_idx, (data, label) in enumerate(train_loader):
+        data = torch.squeeze(data)
+
+        label = torch.squeeze(label)
 
         if BREAST:
             target = torch.tensor(label, dtype=torch.long)
@@ -87,6 +90,10 @@ def train(model, optimizer, train_loader, valid_loader):
 
         model.eval()
         for batch_idx, (data, label) in enumerate(valid_loader):
+
+            data = torch.squeeze(data)
+
+            label = torch.squeeze(label)
 
             if BREAST:
                 target = torch.tensor(label, dtype=torch.long)
@@ -121,7 +128,8 @@ def test(model, test_loader):
     FN = [0.]
     ALL = 0.
     for batch_idx, (data, label) in enumerate(test_loader):
-
+        data=torch.squeeze(data)
+        label=torch.squeeze(label)
         if BREAST:
             target = torch.tensor(label, dtype=torch.long)
         else:
@@ -147,24 +155,18 @@ if __name__ == "__main__":
     PATH = 'Multiple-instance-learning-with-graphs/models/saved/'
 
     if COLON:
-        ds = ColonCancerBagsCross(path='//datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
+        ds = ColonCancerBagsCross(path='/home/adminofourkioti/PycharmProjects/Multiple-instance-learning-with-graphs/datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
         train_loader, valid_loader,test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader,test_loader])
-
         model = GraphBased27x27x3().cuda()
         optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
-    elif BREAST:
-        ds = BreastCancerBags(path='Multiple-instance-learning-with-graph-neural-networks/datasets/Bisque', train_val_idxs=range(100), test_idxs=[], loc_info=False)
-        train_loader, test_loader = load_BREAST_train_test(ds)
 
-        model = GraphBased50x50x3().cuda()
-        optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
     else:
         print("You don't have such dataset!!!")
 
     run=5
-    ifolds = 1
-    patience=40
+    ifolds = 10
+    patience=5
 
     acc = np.zeros((run,  ifolds), dtype=float)
     precision = np.zeros((run,     ifolds), dtype=float)
@@ -172,45 +174,56 @@ if __name__ == "__main__":
     f_score = np.zeros((run,     ifolds), dtype=float)
 
     fold=1
-    kfold = KFold(n_splits=10, shuffle=True)
+    kfold = KFold(n_splits=ifolds, shuffle=True)
     for irun in range(run):
-        for fold, (train_ids, test_ids) in enumerate(kfold.split(dataset)):
+        for fold, (ids, test_ids) in enumerate(kfold.split(dataset)):
             val_loss = 0
             counter=0
             best_score=None
+
+            random.shuffle(ids)
+            train_ids = ids[:int((len(ids) + 1) * .90)]  # Remaining 80% to training set
+            val_ids= ids[int((len(ids) + 1) * .90):]
             train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
+            val_subsampler = torch.utils.data.SubsetRandomSampler(val_ids)
             test_subsampler = torch.utils.data.SubsetRandomSampler(test_ids)
 
             # Define data loaders for training and testing data in this fold
-            trainloader = torch.utils.data.DataLoader(
+            train_loader =torch.utils.data.DataLoader(
                 dataset,
-                batch_size=10, sampler=train_subsampler)
+                batch_size=1, sampler=train_subsampler)
 
-            testloader = torch.utils.data.DataLoader(
+            valid_loader = torch.utils.data.DataLoader(
                 dataset,
-                batch_size=10, sampler=test_subsampler)
-            print (test_loader)
+                batch_size=1, sampler=val_subsampler)
 
+            test_loader = torch.utils.data.DataLoader(
+                dataset,
+                batch_size=1, sampler=test_subsampler)
+            early_stopping = EarlyStopping(patience=patience, verbose=True)
             for epoch in range(0, 10000):
                 train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train(model, optimizer, train_loader, valid_loader)
                 ts_Accuracy, ts_Precision, ts_Recall, ts_F1 = test(model, test_loader)
-                # early_stopping(valid_loss, model)
-                #
-                # if early_stopping.early_stop:
-                #     print("Early stopping")
-                #     break
+
+                early_stopping(valid_loss,model)
+                if early_stopping.early_stop:
+                    print("Early stopping")
+                    break
+
 
                 print('Epoch: {}, Train Loss: {:.4f}, valid Loss: {:.4f},Train A: {:.4f}, P: {:.4f}, R: {:.4f}, F1: {:.4f}, Test A: {:.4f}, '
                       'P: {:.4f}, R: {:.4f}, F1: {:.4f}'.
                       format(epoch, train_loss,valid_loss, tr_Accuracy, tr_Precision, tr_Recall, tr_F1, ts_Accuracy, ts_Precision, ts_Recall, ts_F1))
 
             acc[irun][fold], recall[irun][fold], precision[irun][fold], f_score[irun][fold]= ts_Accuracy, ts_Precision, ts_Recall, ts_F1
-            print('mi-net mean accuracy = ', np.mean(acc))
-            print('std = ', np.std(acc))
-            print('mi-net mean precision = ', np.mean(precision))
-            print('std = ', np.std(precision))
-            print('mi-net mean recall = ', np.mean(recall))
-            print('std = ', np.std(recall))
-            print('mi-net mean auc = ', np.mean(f_score))
-            print('std = ', np.std(f_score))
+        print ("irun =", irun)
+        print ("ifold=", fold)
+        print('mi-net mean accuracy = ', np.mean(acc))
+        print('std = ', np.std(acc))
+        print('mi-net mean precision = ', np.mean(precision))
+        print('std = ', np.std(precision))
+        print('mi-net mean recall = ', np.mean(recall))
+        print('std = ', np.std(recall))
+        print('mi-net fscore = ', np.mean(f_score))
+        print('std = ', np.std(f_score))
 

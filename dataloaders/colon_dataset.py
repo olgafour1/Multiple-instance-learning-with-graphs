@@ -4,7 +4,6 @@ import os
 import random
 import scipy.io
 import numpy as np
-from PIL import Image
 from skimage import io, color
 
 import torch
