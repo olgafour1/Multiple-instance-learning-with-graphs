@@ -11,7 +11,7 @@ from models.MIL_GNN import  GraphBased27x27x3, GraphBased50x50x3
 from dataloaders.colon_dataset import ColonCancerBagsCross
 from os import path
 import sys
-sys.path.append(path.abspath('/home/adminofourkioti/PycharmProjects/early-stopping-pytorch'))
+sys.path.append(path.abspath('/home/sotorios/PycharmProjects/early-stopping-pytorch'))
 from pytorchtools import EarlyStopping
 
 
@@ -147,15 +147,18 @@ def test(model, test_loader):
     Recall =  TP[0] / (TP[0] + FN[0]) if (TP[0] + FN[0]) != 0. else TP[0]
     F1 = 2 * (Recall * Precision) / (Recall + Precision) if (Recall + Precision) != 0 else  2 * (Recall * Precision)
 
+
+
+
     return  Accuracy, Precision, Recall, F1
 
 
 if __name__ == "__main__":
     torch.manual_seed(1)
-    PATH = 'Multiple-instance-learning-with-graphs/models/saved/'
+    PATH = 'models/saved/'
 
     if COLON:
-        ds = ColonCancerBagsCross(path='/home/adminofourkioti/PycharmProjects/Multiple-instance-learning-with-graphs/datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
+        ds = ColonCancerBagsCross(path='../datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
         train_loader, valid_loader,test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader,test_loader])
         model = GraphBased27x27x3().cuda()
@@ -166,14 +169,14 @@ if __name__ == "__main__":
 
     run=5
     ifolds = 10
-    patience=5
+    patience=50
 
     acc = np.zeros((run,  ifolds), dtype=float)
     precision = np.zeros((run,     ifolds), dtype=float)
     recall = np.zeros((run,     ifolds), dtype=float)
     f_score = np.zeros((run,     ifolds), dtype=float)
 
-    fold=1
+
     kfold = KFold(n_splits=ifolds, shuffle=True)
     for irun in range(run):
         for fold, (ids, test_ids) in enumerate(kfold.split(dataset)):
@@ -200,8 +203,9 @@ if __name__ == "__main__":
             test_loader = torch.utils.data.DataLoader(
                 dataset,
                 batch_size=1, sampler=test_subsampler)
+
             early_stopping = EarlyStopping(patience=patience, verbose=True)
-            for epoch in range(0, 10000):
+            for epoch in range(0, 1000):
                 train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train(model, optimizer, train_loader, valid_loader)
                 ts_Accuracy, ts_Precision, ts_Recall, ts_F1 = test(model, test_loader)
 
@@ -217,7 +221,7 @@ if __name__ == "__main__":
 
             acc[irun][fold], recall[irun][fold], precision[irun][fold], f_score[irun][fold]= ts_Accuracy, ts_Precision, ts_Recall, ts_F1
         print ("irun =", irun)
-        print ("ifold=", fold)
+        print ("fold=", fold)
         print('mi-net mean accuracy = ', np.mean(acc))
         print('std = ', np.std(acc))
         print('mi-net mean precision = ', np.mean(precision))
