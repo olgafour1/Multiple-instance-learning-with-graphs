@@ -28,15 +28,16 @@ class ColonCancerBagsCross(data_utils.Dataset):
                                                                    utils_augmentation.RandomRotate(),
                                                                    utils_augmentation.RandomVerticalFlip(),
                                                                    transforms.RandomHorizontalFlip(),
-                                                                   transforms.ToTensor(),
-                                                                   transforms.Normalize((0.5, 0.5, 0.5),
-                                                                                        (0.5, 0.5, 0.5))])
+                                                                   transforms.ToTensor()
+                                                                   # transforms.Normalize((0.5, 0.5, 0.5),
+                                                                   #                      (0.5, 0.5, 0.5))
+                                                                 ])
 
         self.normalize_to_tensor_transform = transforms.Compose([
-                                                                 utils_augmentation.HistoNormalize(),
-                                                                 transforms.ToTensor(),
-                                                                 transforms.Normalize((0.5, 0.5, 0.5),
-                                                                                      (0.5, 0.5, 0.5))
+                                                                    utils_augmentation.HistoNormalize(),
+                                                                    transforms.ToTensor(),
+                                                                    # transforms.Normalize((0.5, 0.5, 0.5),
+                                                                    #          (0.5, 0.5, 0.5))
                                                                     ])
 
         self.dir_list_train, self.dir_list_test = self.split_dir_list(self.path, self.train_val_idxs, self.test_idxs)
@@ -145,6 +146,7 @@ class ColonCancerBagsCross(data_utils.Dataset):
     def transform_and_data_augmentation(self, bag):
         if self.data_augmentation:
             img_transform = self.data_augmentation_img_transform
+
         else:
             img_transform = self.normalize_to_tensor_transform
 
@@ -156,7 +158,7 @@ class ColonCancerBagsCross(data_utils.Dataset):
                     torch.from_numpy(img[:, :, 3:].astype(float).transpose((2, 0, 1))).float())))
             else:
                 bag_tensors.append(img_transform(img))
-        
+
         return torch.stack(bag_tensors)
 
     def __len__(self):

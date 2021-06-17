@@ -104,4 +104,6 @@ def normalize(image, target=None):
     returnimage *= 255
     # Replace white pixels
     returnimage[whitemask] = image[whitemask]
+
+
     return returnimage.astype(np.uint8)

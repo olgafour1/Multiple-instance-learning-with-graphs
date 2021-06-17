@@ -180,8 +180,6 @@ if __name__ == "__main__":
     recall = np.zeros((run,     ifolds), dtype=float)
     f_score = np.zeros((run,     ifolds), dtype=float)
 
-
-    
     for irun in range(run):
         kfold = KFold(n_splits=ifolds, shuffle=True, random_state=irun)
 
@@ -197,7 +195,6 @@ if __name__ == "__main__":
             val_subsampler = torch.utils.data.SubsetRandomSampler(val_ids)
             test_subsampler = torch.utils.data.SubsetRandomSampler(test_ids)
 
-            # Define data loaders for training and testing data in this fold
             train_loader =torch.utils.data.DataLoader(
                 dataset,
                 batch_size=1, sampler=train_subsampler)
@@ -212,13 +209,15 @@ if __name__ == "__main__":
 
             early_stopping = EarlyStopping(patience=patience, verbose=True)
             for epoch in range(0, 500):
-                train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train(model, optimizer, train_loader, valid_loader)
+                train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train (model, optimizer, train_loader, valid_loader)
                 vl_Accuracy, vl_Precision, vl_Recall, vl_F1 = test(model, valid_loader)
                 print('Epoch: {}, Train Loss: {:.4f}, valid Loss: {:.4f},Train A: {:.4f}, P: {:.4f}, R: {:.4f}, F1: {:.4f}, Test A: {:.4f}, '
                       'P: {:.4f}, R: {:.4f}, F1: {:.4f}'.
                       format(epoch, train_loss,valid_loss, tr_Accuracy, tr_Precision, tr_Recall, tr_F1, vl_Accuracy, vl_Precision, vl_Recall, vl_F1))
+
             ts_Accuracy, ts_Precision, ts_Recall, ts_F1 = test(model, test_loader)
             acc[irun][fold], recall[irun][fold], precision[irun][fold], f_score[irun][fold]= ts_Accuracy, ts_Precision, ts_Recall, ts_F1
+
         print ("irun =", irun)
         print ("fold=", fold)
         print('mi-net mean accuracy = ', np.mean(acc))

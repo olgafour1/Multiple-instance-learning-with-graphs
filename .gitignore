@@ -1,6 +1,8 @@
-logs
-jupiter
-.idea
-trash
-__pycache__
 
+scratch_notebook.ipynb
+/.idea
+/.ipynb_checkpoints
+/run_files
+__pycache__/
+/results
+/test

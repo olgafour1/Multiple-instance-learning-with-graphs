@@ -5,7 +5,6 @@ import torch
 
 from dataloaders.colon_dataset import ColonCancerBagsCross
 
-
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 ds = ColonCancerBagsCross(path='/home/ikostiuk/git_repos/Multiple-instance-learning-with-graph-neural-networks/datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
 
