@@ -14,7 +14,6 @@ import sys
 sys.path.append(path.abspath('/home/sotorios/PycharmProjects/early-stopping-pytorch'))
 from pytorchtools import EarlyStopping
 
-
 COLON = True
 BREAST = False
 
@@ -25,7 +24,10 @@ def load_CC_train_test(ds):
     train = []
     valid=[]
     test = []
+
     step = N * 9// 10
+
+    step = N * 8// 10
     [train.append((ds[i][0], ds[i][1][0])) for i in range(0, step)]
     print(f"train loaded {len(train)} items")
     [valid.append((ds[i][0], ds[i][1][0])) for i in range(step, step+N*1 //10)]
@@ -147,7 +149,7 @@ def test(model, test_loader):
     Recall =  TP[0] / (TP[0] + FN[0]) if (TP[0] + FN[0]) != 0. else TP[0]
     F1 = 2 * (Recall * Precision) / (Recall + Precision) if (Recall + Precision) != 0 else  2 * (Recall * Precision)
 
-
+    #print('test_acc={:.3f}'.format(Accuracy))
 
 
     return  Accuracy, Precision, Recall, F1
@@ -158,7 +160,9 @@ if __name__ == "__main__":
     PATH = 'models/saved/'
 
     if COLON:
+
         ds = ColonCancerBagsCross(path='../datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
+
         train_loader, valid_loader,test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader,test_loader])
         model = GraphBased27x27x3().cuda()
@@ -177,8 +181,10 @@ if __name__ == "__main__":
     f_score = np.zeros((run,     ifolds), dtype=float)
 
 
-    kfold = KFold(n_splits=ifolds, shuffle=True)
+    
     for irun in range(run):
+        kfold = KFold(n_splits=ifolds, shuffle=True, random_state=irun)
+
         for fold, (ids, test_ids) in enumerate(kfold.split(dataset)):
             val_loss = 0
             counter=0
@@ -205,20 +211,13 @@ if __name__ == "__main__":
                 batch_size=1, sampler=test_subsampler)
 
             early_stopping = EarlyStopping(patience=patience, verbose=True)
-            for epoch in range(0, 1000):
+            for epoch in range(0, 500):
                 train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train(model, optimizer, train_loader, valid_loader)
-                ts_Accuracy, ts_Precision, ts_Recall, ts_F1 = test(model, test_loader)
-
-                early_stopping(valid_loss,model)
-                if early_stopping.early_stop:
-                    print("Early stopping")
-                    break
-
-
+                vl_Accuracy, vl_Precision, vl_Recall, vl_F1 = test(model, valid_loader)
                 print('Epoch: {}, Train Loss: {:.4f}, valid Loss: {:.4f},Train A: {:.4f}, P: {:.4f}, R: {:.4f}, F1: {:.4f}, Test A: {:.4f}, '
                       'P: {:.4f}, R: {:.4f}, F1: {:.4f}'.
-                      format(epoch, train_loss,valid_loss, tr_Accuracy, tr_Precision, tr_Recall, tr_F1, ts_Accuracy, ts_Precision, ts_Recall, ts_F1))
-
+                      format(epoch, train_loss,valid_loss, tr_Accuracy, tr_Precision, tr_Recall, tr_F1, vl_Accuracy, vl_Precision, vl_Recall, vl_F1))
+            ts_Accuracy, ts_Precision, ts_Recall, ts_F1 = test(model, test_loader)
             acc[irun][fold], recall[irun][fold], precision[irun][fold], f_score[irun][fold]= ts_Accuracy, ts_Precision, ts_Recall, ts_F1
         print ("irun =", irun)
         print ("fold=", fold)
