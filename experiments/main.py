@@ -11,7 +11,7 @@ from models.MIL_GNN import  GraphBased27x27x3, GraphBased50x50x3
 from dataloaders.colon_dataset import ColonCancerBagsCross
 from os import path
 import sys
-sys.path.append(path.abspath('/home/sotorios/PycharmProjects/early-stopping-pytorch'))
+sys.path.append(path.abspath('/home/ofourkioti/PycharmProjects/early-stopping-pytorch'))
 from pytorchtools import EarlyStopping
 
 COLON = True
