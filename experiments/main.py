@@ -13,8 +13,6 @@ from dataloaders.breast_cancer_cells import BreastCancerBagsCross
 from flushed_print import print
 
 
-from pytorchtools import EarlyStopping
-
 COLON = True
 BREAST = False
 
@@ -214,8 +212,8 @@ if __name__ == "__main__":
                 dataset,
                 batch_size=1, sampler=test_subsampler)
 
-            early_stopping = EarlyStopping(patience=patience, verbose=True)
-            for epoch in range(0, 500):
+
+            for epoch in range(0, 1000):
 
 
                 train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train (model, optimizer, train_loader, valid_loader)
