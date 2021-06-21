@@ -6,13 +6,13 @@ import torch
 import torch.optim as optim
 
 from sklearn.model_selection import KFold
-from models.MIL_GNN import  GraphBased27x27x3, GraphBased50x50x3
+from models.MIL_GNN import  GraphBased27x27x3, GraphBased32x32x3
 
 from dataloaders.colon_dataset import ColonCancerBagsCross
+from dataloaders.breast_cancer_cells import BreastCancerBagsCross
 from flushed_print import print
-from os import path
-import sys
-sys.path.append(path.abspath('/home/ofourkioti/Projects/early-stopping-pytorch'))
+
+
 from pytorchtools import EarlyStopping
 
 COLON = True
@@ -26,8 +26,6 @@ def load_CC_train_test(ds):
     valid=[]
     test = []
 
-    step = N * 9// 10
-
     step = N * 8// 10
     [train.append((ds[i][0], ds[i][1][0])) for i in range(0, step)]
     print(f"train loaded {len(train)} items")
@@ -38,15 +36,19 @@ def load_CC_train_test(ds):
     return train, valid, test
 
 def load_BREAST_train_test(ds):
-    N = len(ds)
-    train = []
-    test = []
-    step = N * 9 // 10
-    [train.append((ds[i][0], ds[i][1])) for i in range(0, step)]
-    print(f"train loaded {len(train)} items")
-    [test.append((ds[i][0], ds[i][1])) for i in range(step, step + N * 3 // 10)]
-    print(f"test loaded {len(test)} items")
-    return train, test
+        N = len(ds)
+        train = []
+        valid = []
+        test = []
+
+        step = N * 8 // 10
+        [train.append((ds[i][0], ds[i][1][0])) for i in range(0, step)]
+        print(f"train loaded {len(train)} items")
+        [valid.append((ds[i][0], ds[i][1][0])) for i in range(step, step + N * 1 // 10)]
+        print(f"valid loaded {len(valid)} items")
+        [test.append((ds[i][0], ds[i][1][0])) for i in range(step + N * 1 // 10, len(ds))]
+        print(f"test loaded {len(test)} items")
+        return train, valid, test
 
 
 def train(model, optimizer, train_loader, valid_loader):
@@ -66,10 +68,9 @@ def train(model, optimizer, train_loader, valid_loader):
 
         label = torch.squeeze(label)
 
-        if BREAST:
-            target = torch.tensor(label, dtype=torch.long)
-        else:
-            target = torch.tensor(label[0], dtype=torch.long)
+
+        target = torch.tensor(label, dtype=torch.long)
+
         
         if torch.cuda.is_available():
             data, target = data.cuda(), target.cuda()
@@ -98,10 +99,8 @@ def train(model, optimizer, train_loader, valid_loader):
 
             label = torch.squeeze(label)
 
-            if BREAST:
-                target = torch.tensor(label, dtype=torch.long)
-            else:
-                target = torch.tensor(label[0], dtype=torch.long)
+
+            target = torch.tensor(label, dtype=torch.long)
 
             if torch.cuda.is_available():
                 data, target = data.cuda(), target.cuda()
@@ -133,10 +132,9 @@ def test(model, test_loader):
     for batch_idx, (data, label) in enumerate(test_loader):
         data=torch.squeeze(data)
         label=torch.squeeze(label)
-        if BREAST:
-            target = torch.tensor(label, dtype=torch.long)
-        else:
-            target = torch.tensor(label[0], dtype=torch.long)
+
+        target = torch.tensor(label, dtype=torch.long)
+
         
         if torch.cuda.is_available():
             data, target = data.cuda(), target.cuda()
@@ -167,6 +165,14 @@ if __name__ == "__main__":
         train_loader, valid_loader,test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader,test_loader])
         model = GraphBased27x27x3().cuda()
+        optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
+    elif BREAST:
+
+        ds = BreastCancerBagsCross(path='datasets/Breast_Cancer_Cells', train_val_idxs=range(30), test_idxs=[], loc_info=False)
+
+        train_loader, valid_loader, test_loader = load_CC_train_test(ds)
+        dataset = ConcatDataset([train_loader, valid_loader, test_loader])
+        model = GraphBased32x32x3().cuda()
         optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
 
     else:
@@ -210,6 +216,8 @@ if __name__ == "__main__":
 
             early_stopping = EarlyStopping(patience=patience, verbose=True)
             for epoch in range(0, 500):
+
+
                 train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train (model, optimizer, train_loader, valid_loader)
                 vl_Accuracy, vl_Precision, vl_Recall, vl_F1 = test(model, valid_loader)
                 print('Epoch: {}, Train Loss: {:.4f}, valid Loss: {:.4f},Train A: {:.4f}, P: {:.4f}, R: {:.4f}, F1: {:.4f}, Test A: {:.4f}, '
