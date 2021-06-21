@@ -28,16 +28,16 @@ class ColonCancerBagsCross(data_utils.Dataset):
                                                                    utils_augmentation.RandomRotate(),
                                                                    utils_augmentation.RandomVerticalFlip(),
                                                                    transforms.RandomHorizontalFlip(),
-                                                                   transforms.ToTensor()
-                                                                   # transforms.Normalize((0.5, 0.5, 0.5),
-                                                                   #                      (0.5, 0.5, 0.5))
+                                                                   transforms.ToTensor(),
+                                                                   transforms.Normalize((0, 0, 0),
+                                                                                        (1, 1, 1))
                                                                  ])
 
         self.normalize_to_tensor_transform = transforms.Compose([
                                                                     utils_augmentation.HistoNormalize(),
                                                                     transforms.ToTensor(),
-                                                                    # transforms.Normalize((0.5, 0.5, 0.5),
-                                                                    #          (0.5, 0.5, 0.5))
+                                                                    transforms.Normalize((0, 0, 0),
+                                                                     (1, 1, 1))
                                                                     ])
 
         self.dir_list_train, self.dir_list_test = self.split_dir_list(self.path, self.train_val_idxs, self.test_idxs)
