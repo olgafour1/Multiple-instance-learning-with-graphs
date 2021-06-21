@@ -12,7 +12,7 @@ from dataloaders.colon_dataset import ColonCancerBagsCross
 from flushed_print import print
 from os import path
 import sys
-sys.path.append(path.abspath('/home/sotorios/PycharmProjects/early-stopping-pytorch'))
+sys.path.append(path.abspath('/home/ofourkioti/Projects/early-stopping-pytorch'))
 from pytorchtools import EarlyStopping
 
 COLON = True
@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
     if COLON:
 
-        ds = ColonCancerBagsCross(path='../datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
+        ds = ColonCancerBagsCross(path='datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
 
         train_loader, valid_loader,test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader,test_loader])
