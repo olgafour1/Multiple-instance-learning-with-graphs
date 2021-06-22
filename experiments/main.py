@@ -16,8 +16,6 @@ from flushed_print import print
 COLON = True
 BREAST = False
 
-
-    
 def load_CC_train_test(ds):
     N = len(ds)
     train = []
@@ -167,7 +165,7 @@ if __name__ == "__main__":
 
     if COLON:
 
-        ds = ColonCancerBagsCross(path='../datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
+        ds = ColonCancerBagsCross(path='datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
 
         train_loader, valid_loader,test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader,test_loader])
@@ -227,7 +225,6 @@ if __name__ == "__main__":
                 model = GraphBased32x32x3().cuda()
                 optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
                 model.apply(reset_weights)
-
 
             for epoch in range(0, 500):
 
