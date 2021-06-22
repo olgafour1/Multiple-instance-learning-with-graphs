@@ -47,6 +47,15 @@ def load_BREAST_train_test(ds):
         [test.append((ds[i][0], ds[i][1][0])) for i in range(step + N * 1 // 10, len(ds))]
         print(f"test loaded {len(test)} items")
         return train, valid, test
+def reset_weights(m):
+  '''
+    Try resetting model weights to avoid
+    weight leakage.
+  '''
+  for layer in m.children():
+   if hasattr(layer, 'reset_parameters'):
+    print(f'Reset trainable parameters of layer = {layer}')
+    layer.reset_parameters()
 
 
 def train(model, optimizer, train_loader, valid_loader):
@@ -146,7 +155,7 @@ def test(model, test_loader):
     Recall =  TP[0] / (TP[0] + FN[0]) if (TP[0] + FN[0]) != 0. else TP[0]
     F1 = 2 * (Recall * Precision) / (Recall + Precision) if (Recall + Precision) != 0 else  2 * (Recall * Precision)
 
-    #print('test_acc={:.3f}'.format(Accuracy))
+    print('test_acc={:.3f}'.format(Accuracy))
 
 
     return  Accuracy, Precision, Recall, F1
@@ -158,20 +167,18 @@ if __name__ == "__main__":
 
     if COLON:
 
-        ds = ColonCancerBagsCross(path='datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
+        ds = ColonCancerBagsCross(path='../datasets/ColonCancer', train_val_idxs=range(100), test_idxs=[], loc_info=False)
 
         train_loader, valid_loader,test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader,test_loader])
-        model = GraphBased27x27x3().cuda()
-        optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
+
     elif BREAST:
 
-        ds = BreastCancerBagsCross(path='datasets/Breast_Cancer_Cells', train_val_idxs=range(30), test_idxs=[], loc_info=False)
+        ds = BreastCancerBagsCross(path='../datasets/Breast_Cancer_Cells', train_val_idxs=range(30), test_idxs=[], loc_info=False)
 
         train_loader, valid_loader, test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader, test_loader])
-        model = GraphBased32x32x3().cuda()
-        optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
+
 
     else:
         print("You don't have such dataset!!!")
@@ -212,8 +219,17 @@ if __name__ == "__main__":
                 dataset,
                 batch_size=1, sampler=test_subsampler)
 
+            if COLON:
+                model =GraphBased27x27x3().cuda()
+                model.apply(reset_weights)
+                optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+            elif BREAST:
+                model = GraphBased32x32x3().cuda()
+                optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
+                model.apply(reset_weights)
 
-            for epoch in range(0, 1000):
+
+            for epoch in range(0, 500):
 
 
                 train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train (model, optimizer, train_loader, valid_loader)
