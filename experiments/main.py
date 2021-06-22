@@ -226,7 +226,7 @@ if __name__ == "__main__":
                 optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
                 model.apply(reset_weights)
 
-            for epoch in range(0, 500):
+            for epoch in range(0, 1000):
 
 
                 train_loss, valid_loss,tr_Accuracy, tr_Precision, tr_Recall, tr_F1 = train (model, optimizer, train_loader, valid_loader)
