@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     elif BREAST:
 
-        ds = BreastCancerBagsCross(path='../datasets/Breast_Cancer_Cells', train_val_idxs=range(30), test_idxs=[], loc_info=False)
+        ds = BreastCancerBagsCross(path='../datasets/Breast_Cancer_Cells', train_val_idxs=range(58), test_idxs=[], loc_info=False)
 
         train_loader, valid_loader, test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader, test_loader])
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     run=5
     ifolds = 10
-    patience=50
+
 
     acc = np.zeros((run,  ifolds), dtype=float)
     precision = np.zeros((run,     ifolds), dtype=float)
@@ -220,7 +220,7 @@ if __name__ == "__main__":
             if COLON:
                 model =GraphBased27x27x3().cuda()
                 model.apply(reset_weights)
-                optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+                optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
             elif BREAST:
                 model = GraphBased32x32x3().cuda()
                 optimizer = optim.Adam(model.parameters(), lr=3e-6, betas=(0.9, 0.999), weight_decay=1e-3)
