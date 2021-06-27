@@ -2,7 +2,6 @@
 
 import os
 import random
-import scipy.io
 import numpy as np
 from skimage import io, color
 import glob
