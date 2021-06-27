@@ -13,8 +13,8 @@ from dataloaders.breast_cancer_cells import BreastCancerBagsCross
 from flushed_print import print
 
 
-COLON = True
-BREAST = False
+COLON = False
+BREAST = True
 
 def load_CC_train_test(ds):
     N = len(ds)
@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     elif BREAST:
 
-        ds = BreastCancerBagsCross(path='../datasets/Breast_Cancer_Cells', train_val_idxs=range(58), test_idxs=[], loc_info=False)
+        ds = BreastCancerBagsCross(path='datasets/Breast_Cancer_Cells', train_val_idxs=range(58), test_idxs=[], loc_info=False)
 
         train_loader, valid_loader, test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader, test_loader])
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         print("You don't have such dataset!!!")
 
     run=5
-    ifolds = 10
+    ifolds = 4
 
 
     acc = np.zeros((run,  ifolds), dtype=float)
