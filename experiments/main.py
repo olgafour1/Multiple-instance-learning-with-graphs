@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     elif BREAST:
 
-        ds = BreastCancerBagsCross(path='datasets/Breast_Cancer_Cells', train_val_idxs=range(58), test_idxs=[], loc_info=False)
+        ds = BreastCancerBagsCross(path='datasets/Breast_Cancer_Cells', train_val_idxs=range(57), test_idxs=[], loc_info=False)
 
         train_loader, valid_loader, test_loader = load_CC_train_test(ds)
         dataset = ConcatDataset([train_loader, valid_loader, test_loader])
